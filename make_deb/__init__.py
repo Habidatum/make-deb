@@ -57,7 +57,7 @@ class DebianConfiguration(object):
         if not os.path.exists(setuppy_path):
             raise DebianConfigurationException("Failed to find setup.py")
         stdout = subprocess.Popen(
-            ["python", os.path.join(self.rootdir, "setup.py"),
+            ["python3", os.path.join(self.rootdir, "setup.py"),
              "--name", "--version", "--maintainer", "--maintainer-email",
              "--description"], stdout=subprocess.PIPE).communicate()
 
@@ -75,6 +75,8 @@ class DebianConfiguration(object):
                     print("Invalid value. Please try again")
 
             context[name] = value
+
+        print(context)
 
         return context
 
@@ -105,6 +107,6 @@ class DebianConfiguration(object):
             decode('utf-8')
         ).render(self.context)
 
-        trigger_filename = "%s.triggers" % self.context['name']
+        trigger_filename = "{}.triggers".format(self.context['name'])
         with open(os.path.join(output_dir, trigger_filename), "w") as f:
-            f.write(trigger_content+"\n")
+            f.write(trigger_content + "\n")
