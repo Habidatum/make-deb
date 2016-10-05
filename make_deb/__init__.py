@@ -6,8 +6,9 @@ from subprocess import check_output
 
 from jinja2 import Template
 
-# String setuptools uses to specify None
-UNKNOWN = "UNKNOWN"
+
+UNKNOWN = "UNKNOWN"  # String setuptools uses to specify None
+FATAL = "fatal"  # String git uses when no tags exhists
 
 
 class DebianConfigurationException(Exception):
@@ -40,9 +41,16 @@ class DebianConfiguration(object):
 
     def _context_from_git(self):
         try:
-            out = check_output(['git', 'log', '-1', '--oneline'],
-                               cwd=self.rootdir)
-            return {"latest_git_commit": out}
+            commit_message = check_output(['git', 'log', '-1', '--oneline'],
+                                          cwd=self.rootdir).decode()
+
+            tag = check_output(["git", "describe"]).decode().replace('\n', '')
+
+            if FATAL in tag:
+                raise DebianConfigurationException('No tags found')
+
+            return {"latest_git_commit": commit_message,
+                    "version": tag}
         except OSError:
             raise DebianConfigurationException("Please install git")
         except Exception as e:
@@ -57,7 +65,7 @@ class DebianConfiguration(object):
 
         out = check_output(["python3", path.join(self.rootdir, "setup.py"),
                             "--name", "--version", "--maintainer",
-                            "--maintainer-email", "--description"])
+                            "--maintainer-email", "--description"]).decode()
 
         setup_values = out.split('\n')[:-1]
         setup_names = ["name", "version", "maintainer", "maintainer_email",
@@ -86,7 +94,8 @@ class DebianConfiguration(object):
             filename = path.splitext(path.basename(template))[0]
 
             content = Template(
-                resource_string("make_deb", template)).render(self.context)
+                resource_string("make_deb",
+                                template).decode()).render(self.context)
 
             with open(path.join(output_dir, filename), "w") as f:
                 f.write(content)

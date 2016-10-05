@@ -8,6 +8,7 @@ from make_deb import DebianConfiguration, DebianConfigurationException
 
 reload(sys)
 
+
 def main():
     try:
         debconf = DebianConfiguration(os.getcwd())
@@ -16,8 +17,11 @@ def main():
         print(e)
         return 1
 
-    print("'debian' directory successfully placed at the root of your repository")
+    print(("'debian' directory successfully placed at "
+           "the root of your repository"))
+
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())
